@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react'
 
 
 function App() {
+  // State to store the audio URL for download
+  const [audioUrl, setAudioUrl] = useState(null);
 
 
   const [text, setText] = useState("");
@@ -38,6 +40,7 @@ function App() {
     if (currentAudio) {
       currentAudio.pause();
       currentAudio.currentTime = 0;
+      setAudioUrl(null);
     }
 
     try {
@@ -46,6 +49,14 @@ function App() {
         language: "en-US",
       });
       setCurrentAudio(audio);
+      // Try to get the audio src for download
+      let url = null;
+      if (audio.src) {
+        url = audio.src;
+      } else if (audio instanceof Blob) {
+        url = URL.createObjectURL(audio);
+      }
+      setAudioUrl(url);
       audio.play();
       audio.addEventListener("ended", () => setLoading(false));
       audio.addEventListener("error", () => setLoading(false));
@@ -62,6 +73,7 @@ function App() {
       currentAudio.pause();
       currentAudio.currentTime = 0;
       setCurrentAudio(null);
+      setAudioUrl(null);
       setLoading(false);
     }
   }
@@ -82,7 +94,7 @@ function App() {
               "bg-yellow-500/20 text-yellow-300 border border-yellow-300 animate-pulse"}`}>
             {aiReady ? "AI Engine is Ready" : "Loading AI Engine..."}
           </div>
-          
+
           <div className="w-full bg-gradient-to-r from-gray-800/90
            to-gray-700 backdrop-blur-md border-gray-600 
            rounded-3xl p-6 shadow-2xl flex flex-col gap-2">
@@ -102,41 +114,36 @@ function App() {
               <span className="text-sm text-gray-400">{text.length} / 3000</span>
             </div>
             <div className="flex gap-3 mt-4 ">
-              <button className='flex-1 px-6 py-3 bg-gradient-to-r from-rose-500
-               to-purple-500 hover:opacity-80 text-white font-semibold rounded-2xl transition disables:opacity-50
-               disabled:cursor'
+              <button className='flex-1 px-6 py-3 bg-gradient-to-r from-rose-500 to-purple-500 hover:opacity-80 text-white font-semibold rounded-2xl transition disables:opacity-50 disabled:cursor'
                 onClick={speakText}
                 disabled={!aiReady || loading || !text.trim()}
               >
-                {
-                  loading ? (
-                    <div>
-                      <div className="animate-spin w-4 h-4 border-2 
-                      border-white/30 border-t-white rounded-full"></div>
-                      Speaking.......
-                    </div>
-
-                   ) : (
-                    <div className="flex- items-center justify-center gap-2 cursor-pointor ">
-                      Speak
-                    </div>
-                  )
-                }
+                {loading ? (
+                  <div>
+                    <div className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full"></div>
+                    Speaking.......
+                  </div>
+                ) : (
+                  <div className="flex- items-center justify-center gap-2 cursor-pointor ">Speak</div>
+                )}
               </button>
-              {
-                currentAudio && (
-                  <button className='px-6 py-3 bg-radient-to-r from-gray-600
-                  to-gray-700 hover:opacity-80 text-white font-semibold 
-                  rounded-2xl border border-neutral-500/30 
-                  transition cursor-pointor'
-                  
-                    onClick={stopAudio}
-                  >
-                    Stop
-
-                  </button>
-                )
-              }
+              {currentAudio && (
+                <button className='px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 hover:opacity-80 text-white font-semibold rounded-2xl border border-neutral-500/30 transition cursor-pointor'
+                  onClick={stopAudio}
+                >
+                  Stop
+                </button>
+              )}
+              {audioUrl && (
+                <a
+                  href={audioUrl}
+                  download="tts-audio.mp3"
+                  className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:opacity-80 text-white font-semibold rounded-2xl border border-neutral-500/30 transition cursor-pointer text-center"
+                  style={{ textDecoration: 'none' }}
+                >
+                  Download Audio
+                </a>
+              )}
             </div>
             <div className=  "mt-6 space-y-4 text-white ">
               {
